@@ -80,7 +80,7 @@ CreateThread(function()
 			elseif Config.DrawText == "CD" then
 				TriggerEvent('cd_drawtextui:HideUI')
 			end
-			wakeup()
+			WakeUp()
 		end
 
 		if IsControlPressed(0, Config.GetUpKey) and IsInputDisabled(0) and IsPedOnFoot(playerPed) then
@@ -91,7 +91,7 @@ CreateThread(function()
 					TriggerEvent('cd_drawtextui:HideUI')
 				end
 				Wait(7)
-				wakeup()
+				WakeUp()
 			end
 		end
 	end
