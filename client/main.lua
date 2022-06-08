@@ -7,6 +7,60 @@ exports('sitting', function()
     return sitting
 end)
 
+local function WakeUp()
+	local playerPed = PlayerPedId()
+	local pos = GetEntityCoords(PlayerPedId())
+
+	TaskStartScenarioAtPosition(playerPed, currentScenario, 0.0, 0.0, 0.0, 180.0, 2, true, false)
+	while IsPedUsingScenario(PlayerPedId(), currentScenario) do
+		Wait(100)
+	end
+	ClearPedTasks(playerPed)
+
+	FreezeEntityPosition(playerPed, false)
+	FreezeEntityPosition(currentObj, false)
+	TriggerServerEvent('tr-sitleavePlace', currentSitCoords)
+	currentSitCoords, currentScenario = nil, nil
+	sitting = false
+	disableControls = false
+end
+
+local function sit(object, modelName, data)
+	if not HasEntityClearLosToEntity(PlayerPedId(), object, 17) then
+		return
+	end
+	disableControls = true
+	currentObj = object
+	FreezeEntityPosition(object, true)
+
+	PlaceObjectOnGroundProperly(object)
+	local pos = GetEntityCoords(object)
+	local playerPos = GetEntityCoords(PlayerPedId())
+	local objectCoords = pos.x .. pos.y .. pos.z
+
+	QBCore.Functions.TriggerCallback('tr-sitgetPlace', function(occupied)
+		if occupied then
+			QBCore.Functions.Notify(Config.Text["Occupied"], 'error')
+		else
+			local playerPed = PlayerPedId()
+			lastPos, currentSitCoords = GetEntityCoords(playerPed), objectCoords
+
+			TriggerServerEvent('tr-sittakePlace', objectCoords)
+
+			currentScenario = data.scenario
+			TaskStartScenarioAtPosition(playerPed, currentScenario, pos.x, pos.y, pos.z + (playerPos.z - pos.z)/2, GetEntityHeading(object) + 180.0, 0, true, false)
+
+			Wait(2500)
+			if GetEntitySpeed(PlayerPedId()) > 0 then
+				ClearPedTasks(PlayerPedId())
+				TaskStartScenarioAtPosition(playerPed, currentScenario, pos.x, pos.y, pos.z + (playerPos.z - pos.z)/2, GetEntityHeading(object) + 180.0, 0, true, true)
+			end
+
+			sitting = true
+		end
+	end, objectCoords)
+end
+
 CreateThread(function()
 	while true do
 		Wait(0)
@@ -69,7 +123,7 @@ RegisterNetEvent("qb-Sit:Sit", function(data)
 	local playerPed = PlayerPedId()
 
 	if sitting and not IsPedUsingScenario(playerPed, currentScenario) then
-		wakeup()
+		WakeUp()
 	end
 
 	if disableControls then
@@ -89,58 +143,3 @@ RegisterNetEvent("qb-Sit:Sit", function(data)
 		end
 	end
 end)
-
-
-function wakeup()
-	local playerPed = PlayerPedId()
-	local pos = GetEntityCoords(PlayerPedId())
-
-	TaskStartScenarioAtPosition(playerPed, currentScenario, 0.0, 0.0, 0.0, 180.0, 2, true, false)
-	while IsPedUsingScenario(PlayerPedId(), currentScenario) do
-		Wait(100)
-	end
-	ClearPedTasks(playerPed)
-
-	FreezeEntityPosition(playerPed, false)
-	FreezeEntityPosition(currentObj, false)
-	TriggerServerEvent('tr-sitleavePlace', currentSitCoords)
-	currentSitCoords, currentScenario = nil, nil
-	sitting = false
-	disableControls = false
-end
-
-function sit(object, modelName, data)
-	if not HasEntityClearLosToEntity(PlayerPedId(), object, 17) then
-		return
-	end
-	disableControls = true
-	currentObj = object
-	FreezeEntityPosition(object, true)
-
-	PlaceObjectOnGroundProperly(object)
-	local pos = GetEntityCoords(object)
-	local playerPos = GetEntityCoords(PlayerPedId())
-	local objectCoords = pos.x .. pos.y .. pos.z
-
-	QBCore.Functions.TriggerCallback('tr-sitgetPlace', function(occupied)
-		if occupied then
-			QBCore.Functions.Notify(Config.Text["Occupied"], 'error')
-		else
-			local playerPed = PlayerPedId()
-			lastPos, currentSitCoords = GetEntityCoords(playerPed), objectCoords
-
-			TriggerServerEvent('tr-sittakePlace', objectCoords)
-
-			currentScenario = data.scenario
-			TaskStartScenarioAtPosition(playerPed, currentScenario, pos.x, pos.y, pos.z + (playerPos.z - pos.z)/2, GetEntityHeading(object) + 180.0, 0, true, false)
-
-			Wait(2500)
-			if GetEntitySpeed(PlayerPedId()) > 0 then
-				ClearPedTasks(PlayerPedId())
-				TaskStartScenarioAtPosition(playerPed, currentScenario, pos.x, pos.y, pos.z + (playerPos.z - pos.z)/2, GetEntityHeading(object) + 180.0, 0, true, true)
-			end
-
-			sitting = true
-		end
-	end, objectCoords)
-end
