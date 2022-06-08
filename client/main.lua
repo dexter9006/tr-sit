@@ -19,7 +19,7 @@ local function WakeUp()
 
 	FreezeEntityPosition(playerPed, false)
 	FreezeEntityPosition(currentObj, false)
-	TriggerServerEvent('tr-sitleavePlace', currentSitCoords)
+	TriggerServerEvent('tr-sit:leavePlace', currentSitCoords)
 	currentSitCoords, currentScenario = nil, nil
 	sitting = false
 	disableControls = false
@@ -38,14 +38,14 @@ local function sit(object, modelName, data)
 	local playerPos = GetEntityCoords(PlayerPedId())
 	local objectCoords = pos.x .. pos.y .. pos.z
 
-	QBCore.Functions.TriggerCallback('tr-sitgetPlace', function(occupied)
+	QBCore.Functions.TriggerCallback('tr-sit:getPlace', function(occupied)
 		if occupied then
 			QBCore.Functions.Notify(Config.Text["Occupied"], 'error')
 		else
 			local playerPed = PlayerPedId()
 			lastPos, currentSitCoords = GetEntityCoords(playerPed), objectCoords
 
-			TriggerServerEvent('tr-sittakePlace', objectCoords)
+			TriggerServerEvent('tr-sit:takePlace', objectCoords)
 
 			currentScenario = data.scenario
 			TaskStartScenarioAtPosition(playerPed, currentScenario, pos.x, pos.y, pos.z + (playerPos.z - pos.z)/2, GetEntityHeading(object) + 180.0, 0, true, false)
@@ -108,7 +108,7 @@ CreateThread(function()
 	exports['qb-target']:AddTargetModel(Sitables, {
         options = {
             {
-                event = "qb-Sit:Sit",
+                event = "tr-sit:Sit",
                 icon = "fas fa-chair",
                 label = Config.Text["TargetLabel"],
 				entity = entity
@@ -119,7 +119,7 @@ CreateThread(function()
     })
 end)
 
-RegisterNetEvent("qb-Sit:Sit", function(data)
+RegisterNetEvent("tr-sit:Sit", function(data)
 	local playerPed = PlayerPedId()
 
 	if sitting and not IsPedUsingScenario(playerPed, currentScenario) then
@@ -132,7 +132,7 @@ RegisterNetEvent("qb-Sit:Sit", function(data)
 
 	local object, distance = data.entity, #(GetEntityCoords(playerPed) - GetEntityCoords(data.entity))
 
-	if distance and distance < 1.4 then
+	if distance and distance < 1.6 then
 		local hash = GetEntityModel(object)
 
 		for k,v in pairs(Config.Sitable) do
