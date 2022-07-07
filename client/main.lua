@@ -25,35 +25,40 @@ local function WakeUp()
 	disableControls = false
 end
 
+local RoundFloat = function(number, num)
+    return math.floor(number*math.pow(10,num)+0.5) / math.pow(10,num)
+end
+
 local function sit(object, modelName, data)
-	if not HasEntityClearLosToEntity(PlayerPedId(), object, 17) then
-		return
-	end
 	disableControls = true
 	currentObj = object
 	FreezeEntityPosition(object, true)
-
-	PlaceObjectOnGroundProperly(object)
-	local pos = GetEntityCoords(object)
-	local playerPos = GetEntityCoords(PlayerPedId())
-	local objectCoords = pos.x .. pos.y .. pos.z
+	
+	local objPos = GetEntityCoords(object)
+	local objHead = GetEntityHeading(object)
+	
+	local playerPed = PlayerPedId()
+	local playerPos = GetEntityCoords(playerPed)
+	
+	local objectCoords = RoundFloat(objPos.x, 1) .. ", " .. RoundFloat(objPos.y, 1) .. ", " .. RoundFloat(objPos.z, 1)
+	
+	local offset = GetObjectOffsetFromCoords(objPos.x, objPos.y, objPos.z, objHead, data.sideOffset, data.forwardOffset, data.verticalOffset)
 
 	QBCore.Functions.TriggerCallback('tr-sit:getPlace', function(occupied)
 		if occupied then
 			QBCore.Functions.Notify(Config.Text["Occupied"], 'error')
 		else
-			local playerPed = PlayerPedId()
-			lastPos, currentSitCoords = GetEntityCoords(playerPed), objectCoords
+			lastPos, currentSitCoords = playerPos, objectCoords
 
 			TriggerServerEvent('tr-sit:takePlace', objectCoords)
 
 			currentScenario = data.scenario
-			TaskStartScenarioAtPosition(playerPed, currentScenario, pos.x, pos.y, pos.z + (playerPos.z - pos.z)/2, GetEntityHeading(object) + 180.0, 0, true, false)
-
+			TaskStartScenarioAtPosition(playerPed, currentScenario, offset.x, offset.y, offset.z, (objHead + 180.0) + data.rotationOffset, 0, true, false)
+			
 			Wait(2500)
 			if GetEntitySpeed(PlayerPedId()) > 0 then
 				ClearPedTasks(PlayerPedId())
-				TaskStartScenarioAtPosition(playerPed, currentScenario, pos.x, pos.y, pos.z + (playerPos.z - pos.z)/2, GetEntityHeading(object) + 180.0, 0, true, true)
+				TaskStartScenarioAtPosition(playerPed, currentScenario, offset.x, offset.y, offset.z, (objHead + 180.0) + data.rotationOffset, 0, true, false)
 			end
 
 			sitting = true
@@ -132,7 +137,7 @@ RegisterNetEvent("tr-sit:Sit", function(data)
 
 	local object, distance = data.entity, #(GetEntityCoords(playerPed) - GetEntityCoords(data.entity))
 
-	if distance and distance < 1.6 then
+	if distance and distance < Config.MaxDistance then
 		local hash = GetEntityModel(object)
 
 		for k,v in pairs(Config.Sitable) do
