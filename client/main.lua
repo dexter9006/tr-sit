@@ -30,14 +30,9 @@ local RoundFloat = function(number, num)
 end
 
 local function sit(object, modelName, data)
-	if not HasEntityClearLosToEntity(PlayerPedId(), object, 17) then
-		return
-	end
 	disableControls = true
 	currentObj = object
 	FreezeEntityPosition(object, true)
-
-	PlaceObjectOnGroundProperly(object)
 	
 	local objPos = GetEntityCoords(object)
 	local objHead = GetEntityHeading(object)
@@ -46,8 +41,8 @@ local function sit(object, modelName, data)
 	local playerPos = GetEntityCoords(playerPed)
 	
 	local objectCoords = RoundFloat(objPos.x, 1) .. ", " .. RoundFloat(objPos.y, 1) .. ", " .. RoundFloat(objPos.z, 1)
+	
 	local offset = GetObjectOffsetFromCoords(objPos.x, objPos.y, objPos.z, objHead, data.sideOffset, data.forwardOffset, data.verticalOffset)
-
 
 	QBCore.Functions.TriggerCallback('tr-sit:getPlace', function(occupied)
 		if occupied then
@@ -142,7 +137,7 @@ RegisterNetEvent("tr-sit:Sit", function(data)
 
 	local object, distance = data.entity, #(GetEntityCoords(playerPed) - GetEntityCoords(data.entity))
 
-	if distance and distance < 1.6 then
+	if distance and distance < Config.MaxDistance then
 		local hash = GetEntityModel(object)
 
 		for k,v in pairs(Config.Sitable) do
