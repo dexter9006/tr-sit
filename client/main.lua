@@ -25,6 +25,10 @@ local function WakeUp()
 	disableControls = false
 end
 
+local RoundFloat = function(number, num)
+    return math.floor(number*math.pow(10,num)+0.5) / math.pow(10,num)
+end
+
 local function sit(object, modelName, data)
 	if not HasEntityClearLosToEntity(PlayerPedId(), object, 17) then
 		return
@@ -41,7 +45,7 @@ local function sit(object, modelName, data)
 	local playerPed = PlayerPedId()
 	local playerPos = GetEntityCoords(playerPed)
 	
-	local objectCoords = pos.x .. pos.y .. pos.z
+	local objectCoords = RoundFloat(objPos.x, 1) .. ", " .. RoundFloat(objPos.y, 1) .. ", " .. RoundFloat(objPos.z, 1)
 	local offset = GetObjectOffsetFromCoords(objPos.x, objPos.y, objPos.z, objHead, data.sideOffset, data.forwardOffset, data.verticalOffset)
 
 
